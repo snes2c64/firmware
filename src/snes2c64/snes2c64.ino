@@ -1,8 +1,98 @@
+#define FN_NOP 0
+#define FN_UP 1
+#define FN_DOWN 2
+#define FN_LEFT 4
+#define FN_RIGHT 8
+#define FN_FIRE 16
+#define FN_FIRE2 32
+#define FN_FIRE3 64
+#define FN_AUTO_FIRE 128
 
-#include "./config.ino"
-#include "./init.ino"
-#include "./maps.ino"
-#include "./vars.ino"
+#define BTN_B 0
+#define BTN_Y 1
+#define BTN_SELECT 2
+#define BTN_START 3
+#define BTN_UP 4
+#define BTN_DOWN 5
+#define BTN_LEFT 6
+#define BTN_RIGHT 7
+#define BTN_A 8
+#define BTN_X 9
+#define BTN_L 10
+#define BTN_R 11
+
+#define EEPROM_CONFIG_VERSION 1
+
+
+// START OF CONFIGURATION
+
+#define MAPCOUNT 8
+// clang-format off
+byte maps[8*MAPCOUNT] = {
+                    /* B     */ FN_FIRE,
+                    /* Y     */ FN_FIRE | FN_AUTO_FIRE,
+
+                    /* ️️UP    */ FN_UP,
+                    /* DOWN  */ FN_DOWN,
+                    /* LEFT  */ FN_LEFT,
+                    /* RIGHT */ FN_RIGHT,
+                    /* A     */ FN_FIRE2,
+                    /* X     */ FN_FIRE2 | FN_AUTO_FIRE,
+                    /* L     */ FN_FIRE3 | FN_AUTO_FIRE,
+                    /* R     */ FN_FIRE3,
+
+                    /* B     */ FN_FIRE,
+                    /* Y     */ FN_UP,
+                    /* ️️UP    */ FN_UP,
+                    /* DOWN  */ FN_DOWN,
+                    /* LEFT  */ FN_LEFT,
+                    /* RIGHT */ FN_RIGHT,
+                    /* A     */ FN_FIRE | FN_AUTO_FIRE,
+                    /* X     */ FN_FIRE2,
+                    /* L     */ FN_FIRE3,
+                    /* R     */ FN_FIRE3,
+                    };
+// clang-format on
+
+
+#define PIN_LED 13
+#define PIN_CLOCK 11
+#define PIN_LATCH 10
+#define PIN_DATA 9
+
+#define PIN_UP 8
+#define PIN_DOWN 6
+#define PIN_LEFT 5
+#define PIN_RIGHT 2
+#define PIN_FIRE 7
+#define PIN_FIRE2 4
+#define PIN_FIRE3 3
+
+#define MIN_AUTO_FIRE_DELAY 2
+#define MAX_AUTO_FIRE_DELAY 64
+#define AUTO_FIRE_DELAY_START 4
+
+#define HZ 100
+
+// END USER CONFIGURATION
+
+
+
+
+
+byte disabled_buttons[16];
+byte buttons[16];
+unsigned long waitTill = 0;
+unsigned long debugTiming = 0;
+
+byte newState[7];
+bool autofire;
+byte autofireCounter;
+byte autofireDelay = AUTO_FIRE_DELAY_START;
+byte usedmap;
+
+
+
 #include <EEPROM.h>
 
 void setup() {
