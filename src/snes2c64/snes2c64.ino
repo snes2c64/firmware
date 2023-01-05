@@ -55,7 +55,8 @@ byte maps[8*MAPCOUNT] = {
 // clang-format on
 
 
-#define PIN_LED 13
+#define PIN_LED2 13
+#define PIN_LED1 12
 #define PIN_CLOCK 11
 #define PIN_LATCH 10
 #define PIN_DATA 9
@@ -77,6 +78,10 @@ byte maps[8*MAPCOUNT] = {
 // END USER CONFIGURATION
 
 
+#define MODE_DEFAULT 1
+#define MODE_START 2
+#define MODE_SELECT 4
+
 
 
 
@@ -84,12 +89,13 @@ byte disabled_buttons[16];
 byte buttons[16];
 unsigned long waitTill = 0;
 unsigned long debugTiming = 0;
-
+unsigned long modeFallback = 0;
 byte newState[7];
 bool autofire;
 byte autofireCounter;
 byte autofireDelay = AUTO_FIRE_DELAY_START;
 byte usedmap;
+byte mode = MODE_DEFAULT;
 
 
 
@@ -98,28 +104,36 @@ byte usedmap;
 void setup() {
   Serial.begin(9600);
   //Serial.println("Starting...");
-  pinMode(PIN_LED, OUTPUT);
+  pinMode(PIN_LED1, OUTPUT);
+  pinMode(PIN_LED2, OUTPUT);
   pinMode(PIN_CLOCK, OUTPUT);
   pinMode(PIN_LATCH, OUTPUT);
   digitalWrite(PIN_CLOCK, HIGH);
   digitalWrite(PIN_DATA, HIGH);
   //Serial.print("Checking if eeprom config is in the right version...");
 
- //if (EEPROM.read(0) != EEPROM_CONFIG_VERSION) {
- //  Serial.print("Nope, resetting to default config");
- //  EEPROM.write(0, EEPROM_CONFIG_VERSION);
- //  for (int i = 0; i < MAPCOUNT * 10; i++) {
- //    EEPROM.write(i + 1, maps[i]);
- //  }
- //  Serial.println("Done");
- //} else {
- //  Serial.println("Yep, loading config.");
- //  for (int i = 0; i < MAPCOUNT * 10; i++) {
- //    maps[i] = EEPROM.read(i + 1);
- //  }
+  //if (EEPROM.read(0) != EEPROM_CONFIG_VERSION) {
+  //  Serial.print("Nope, resetting to default config");
+  //  EEPROM.write(0, EEPROM_CONFIG_VERSION);
+  //  for (int i = 0; i < MAPCOUNT * 10; i++) {
+  //    EEPROM.write(i + 1, maps[i]);
+  //  }
+  //  Serial.println("Done");
+  //} else {
+  //  Serial.println("Yep, loading config.");
+  //  for (int i = 0; i < MAPCOUNT * 10; i++) {
+  //    maps[i] = EEPROM.read(i + 1);
+  //  }
 
- //  Serial.println("Setup complete.");
- //}
+  //  Serial.println("Setup complete.");
+  //}
+  led1(1);
+  delay(50);
+  led2(1);
+  delay(50);
+  led1(0);
+  delay(50);
+  led2(0);
 }
 
 void handleSerial() {
@@ -173,26 +187,22 @@ void loop() {
   handleDelay();
 
   controllerRead();
+  displayAnyButtonPressed();
+  handleReset();
 
-  if (buttons[BTN_SELECT] && buttons[BTN_START]) {
-    handleReset();
-    return;
-  }
-  if (buttons[BTN_SELECT]) {
-    handleSelect();
-    return;
-  }
+  if (mode != MODE_START && handleSelect()) return;
 
-  if (buttons[BTN_START]) {
-    handleStart();
-    return;
-  }
+
+
+  if (handleStart()) return;
+
 
   for (byte i = 0; i < 16; i++) {
     if (disabled_buttons[i]) {
       buttons[i] = 0;
     }
   }
+
 
   for (byte i = 0; i < 10; i++) {
     byte button = i >= BTN_SELECT ? i + 2 : i;
@@ -204,8 +214,7 @@ void loop() {
   }
 
   sendNewState();
-
-  displayAnyButtonPressed();
+  displayAnySignalSend();
 }
 
 void clearNewState() {
@@ -228,60 +237,113 @@ void handleAutofireFlip() {
 }
 
 void handleReset() {
+  if (!buttons[BTN_SELECT] || !buttons[BTN_START]) return;
   autofireDelay = AUTO_FIRE_DELAY_START;
   autofire = false;
   autofireCounter = 0;
-  digitalWrite(PIN_LED, LOW);
   for (byte i = 0; i < 16; i++) {
     disabled_buttons[i] = 0;
   }
-  for (byte i = 0; i < 20; i++) {
-    led(i % 2);
+  for (byte i = 0; i < 10; i++) {
+    led1(i % 2);
     delay(100);
+    led2(i % 2);
   }
+  led1(false);
+  led2(false);
 }
-void handleSelect() {
-  for (byte i = 0; i < 16; i++) {
-    if (i == BTN_SELECT || i == BTN_START) {
-      continue;
+bool handleSelect() {
+  if (mode == MODE_SELECT) {
+    if (modeFallback < millis() || buttons[BTN_START]) {
+      mode = MODE_DEFAULT;
+      waitForNoButtonPressed();
+      return true;
     }
-    if (buttons[i]) {
+    unsigned long diff = modeFallback - millis();
+    diff /= 100;
+    led2(diff % 2);
+    for (byte i = 0; i < 16; i++) {
+      if (i == BTN_SELECT || i == BTN_START) continue;
+      if (!buttons[i]) continue;
       disabled_buttons[i] = !disabled_buttons[i];
+      led1(!disabled_buttons[i]);
+      led2(true);
+      delay(1500);
+      led1(false);
+      led2(false);
+      mode = MODE_DEFAULT;
+      return true;
     }
+    return true;
   }
-  led(1);
-  waitForNoButtonPressed();
-  led(0);
+  if (buttons[BTN_SELECT]) {
+    mode = MODE_SELECT;
+    modeFallback = millis() + 3000;
+    return true;
+  }
+  return false;
 }
-void handleStart() {
 
-  for (byte i = BTN_L; i <= BTN_R; i++) {
-    if (buttons[i]) {
-      autofireDelay += i == BTN_L ? -1 : 1;
-      do {
-        handleDelay();
-        controllerRead();
-        handleAutofireFlip();
-        led(autofire);
-      } while (buttons[i]);
-      led(0);
-      autofireDelay =
+
+bool handleStart() {
+  if (buttons[BTN_START]) {
+    mode = MODE_START;
+    modeFallback = millis() + 3000;
+    led1(1);
+    for (byte i = BTN_L; i <= BTN_R; i++) {
+      if (buttons[i]) {
+        autofireDelay += i == BTN_L ? -1 : 1;
+        autofireDelay =
           max(min(autofireDelay, MAX_AUTO_FIRE_DELAY), MIN_AUTO_FIRE_DELAY);
-      return;
+        do {
+          handleDelay();
+          controllerRead();
+          handleAutofireFlip();
+          led2(autofire);
+        } while (buttons[i]);
+        led2(0);
+        led1(0);
+        mode = MODE_DEFAULT;
+      }
     }
+    return true;
   }
-
-  for (byte i = 0; i < min(8, MAPCOUNT); i++) {
-    byte button = i < BTN_SELECT ? i : i + 2;
-    if (!buttons[button]) {
-      continue;
+  if (mode == MODE_START) {
+    unsigned long diff = modeFallback - millis();
+    diff /= 100;
+    led1(diff % 2);
+    if (modeFallback < millis() || buttons[BTN_SELECT]) {
+      mode = MODE_DEFAULT;
+      waitForNoButtonPressed();
+      return true;
     }
-    usedmap = i;
-    waitForNoButtonPressed();
+    for (byte i = 0; i < min(8, MAPCOUNT); i++) {
+      byte button = i < BTN_SELECT ? i : i + 2;
+      if (!buttons[button]) {
+        continue;
+      }
+      usedmap = i;
+      waitForNoButtonPressed();
+      led1(1);
+      i++;
+      while (i-- > 0) {
+        led2(1);
+        delay(100);
+        led2(0);
+        delay(100);
+      }
+      mode = MODE_DEFAULT;
+    }
+    return true;
   }
+  return false;
 }
-
-void led(bool on) { digitalWrite(PIN_LED, on); }
+void led1(bool on) {
+  digitalWrite(PIN_LED1, on);
+}
+void led2(bool on) {
+  digitalWrite(PIN_LED2, on);
+}
 
 void waitForNoButtonPressed() {
   bool pressed;
@@ -300,7 +362,14 @@ void displayAnyButtonPressed() {
   for (byte i = 0; i < 16; i++) {
     pressed = pressed || buttons[i];
   }
-  led(pressed);
+  led1(pressed);
+}
+void displayAnySignalSend() {
+  bool pressed = false;
+  for (byte i = 0; i < 7; i++) {
+    pressed = pressed || newState[i];
+  }
+  led2(pressed);
 }
 
 void controllerRead() {
@@ -329,6 +398,8 @@ void action(byte fn, bool pressed, bool isautofire) {
   for (byte i = 0; i < 7; i++) {
     if (fn & (1 << i)) {
       newState[i] = newState[i] || (pressed && (!isautofire || autofire));
+      if (newState[i]) {
+      }
     }
   }
 }
