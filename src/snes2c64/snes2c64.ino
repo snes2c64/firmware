@@ -238,6 +238,7 @@ void handleAutofireFlip() {
 
 void handleReset() {
   if (!buttons[BTN_SELECT] || !buttons[BTN_START]) return;
+  mode=MODE_DEFAULT;
   autofireDelay = AUTO_FIRE_DELAY_START;
   autofire = false;
   autofireCounter = 0;
@@ -249,6 +250,9 @@ void handleReset() {
     delay(100);
     led2(i % 2);
   }
+  led1(true);
+  led2(true);
+  waitForNoButtonPressed();
   led1(false);
   led2(false);
 }
