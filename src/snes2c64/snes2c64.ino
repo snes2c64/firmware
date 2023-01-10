@@ -125,7 +125,7 @@ void setup() {
   //    maps[i] = EEPROM.read(i + 1);
   //  }
 
-  
+
   //}
   led1(1);
   delay(50);
@@ -161,18 +161,20 @@ void handleSerial() {
 
   if (c == 'u') {
 
-    if (Serial.available() >= 10) {
-      Serial.println("writing a new Map[");
-      int mapNum = max(0, min(Serial.read(), MAPCOUNT));
-      Serial.print(mapNum);
-      Serial.println("]: ");
-      for (int i = 0; i < 10; i++) {
-        maps[mapNum * 10 + i] = Serial.read();
-        Serial.print(maps[mapNum * 10 + i], HEX);
-        // EEPROM.write(i + 1, maps[i]);
-      }
-      Serial.println("Done");
+    while (Serial.available() < 11) {}
+    Serial.print("writing a new Map[");
+    int mapNum = Serial.read();
+    mapNum = max(0, min(mapNum, MAPCOUNT));
+    Serial.print(mapNum, HEX);
+    Serial.println("]: ");
+    for (int i = 0; i < 10; i++) {
+      maps[mapNum * 10 + i] = Serial.read();
+      Serial.print(maps[mapNum * 10 + i], HEX);
+      Serial.print(" ");
+      // EEPROM.write(i + 1, maps[i]);
     }
+    Serial.println();
+    Serial.println("Done");
     return;
   }
   Serial.println("Unknown command");
@@ -239,7 +241,7 @@ void handleAutofireFlip() {
 
 void handleReset() {
   if (!buttons[BTN_SELECT] || !buttons[BTN_START]) return;
-  mode=MODE_DEFAULT;
+  mode = MODE_DEFAULT;
   autofireDelay = AUTO_FIRE_DELAY_START;
   autofire = false;
   autofireCounter = 0;
