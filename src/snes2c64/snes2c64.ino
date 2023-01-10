@@ -154,7 +154,7 @@ void handleSerial() {
         Serial.print(" ");
       }
     }
-    Serial.print("END");
+    Serial.println("END");
     return;
   }
 
