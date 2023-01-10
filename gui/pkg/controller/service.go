@@ -54,7 +54,7 @@ func (c *Controller) Download() (g []GamepadMap, err error) {
 
 	m, err := readUntil(c.port, DownloadCompleteMsg)
 
-	lines := m[strings.Index(m, DownloadStartMsg)+len(DownloadStartMsg)+2 : strings.LastIndex(m, DownloadCompleteMsg)]
+	lines := m[strings.Index(m, DownloadStartMsg)+len(DownloadStartMsg)+1 : strings.LastIndex(m, DownloadCompleteMsg)]
 	for _, line := range strings.Split(lines[1:len(lines)-2], "\r\n") {
 		var gamepadMap GamepadMap
 
@@ -68,9 +68,7 @@ func (c *Controller) Download() (g []GamepadMap, err error) {
 			gamepadMap[i] = f
 		}
 
-		defer func(gamemap GamepadMap) {
-			g = append(g, gamemap)
-		}(gamepadMap)
+		g = append(g, gamepadMap)
 	}
 
 	return g, nil
