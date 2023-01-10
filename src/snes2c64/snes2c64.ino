@@ -125,7 +125,7 @@ void setup() {
   //    maps[i] = EEPROM.read(i + 1);
   //  }
 
-  //  Serial.println("Setup complete.");
+  
   //}
   led1(1);
   delay(50);
@@ -134,6 +134,7 @@ void setup() {
   led1(0);
   delay(50);
   led2(0);
+  Serial.println("Setup complete.");
 }
 
 void handleSerial() {
