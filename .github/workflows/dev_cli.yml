@@ -19,7 +19,7 @@ jobs:
         run: cd gui; go build -o snes2c64-cli-linux-amd64 snes2c64gui/cmd/cli
 
       - name: Test
-        run: go test -v ./...
+        run: cd gui; go test -v ./...
 
       - uses: "marvinpinto/action-automatic-releases@latest"
         with:
