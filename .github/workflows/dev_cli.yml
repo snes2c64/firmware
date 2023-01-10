@@ -28,4 +28,4 @@ jobs:
           prerelease: true
           title: "Latest build on develop"
           files: |
-            snes2c64-cli-linux-amd64
+            gui/snes2c64-cli-linux-amd64
