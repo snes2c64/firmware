@@ -10,12 +10,14 @@ import (
 )
 
 const (
-	SetupCompleteMsg    = "Setup complete."
+	SetupCompleteMsg = "Setup complete."
+
+	DownloadCmd         = "d"
 	DownloadStartMsg    = "START"
 	DownloadCompleteMsg = "END"
-	DownloadCmd         = "d"
-	UploadDoneMsg       = "Done"
-	UploadCmd           = "u"
+
+	UploadCmd     = "u"
+	UploadDoneMsg = "Done"
 )
 
 type GamepadMap [10]uint8
