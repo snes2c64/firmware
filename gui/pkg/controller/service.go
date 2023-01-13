@@ -53,6 +53,9 @@ func (c *Controller) Download() (g []GamepadMap, err error) {
 	}
 
 	m, err := readUntil(c.port, DownloadCompleteMsg)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read from port: %w", err)
+	}
 
 	lines := m[strings.Index(m, DownloadStartMsg)+len(DownloadStartMsg)+1 : strings.LastIndex(m, DownloadCompleteMsg)]
 	for _, line := range strings.Split(lines[1:len(lines)-2], "\r\n") {
