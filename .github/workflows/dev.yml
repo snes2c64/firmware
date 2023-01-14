@@ -1,0 +1,51 @@
+name: Development Builds
+
+on:
+  push:
+    branches: ["develop"]
+
+jobs:
+  test:
+    - name: Test
+      run: cd gui; go test -v ./...
+  build_cli:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.19
+
+      - name: Build
+        run: cd gui; go build -o snes2c64-cli-linux-amd64 snes2c64gui/cmd/cli
+  build_gui:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.19
+
+      - name: Get dependencies
+        run: sudo apt-get update && sudo apt-get install gcc libgl1-mesa-dev libegl1-mesa-dev libgles2-mesa-dev libx11-dev xorg-dev libwayland-dev libxkbcommon-dev bc
+        if: ${{ runner.os == 'Linux' }}
+
+      - name: Build
+        run: cd gui; go build -o snes2c64-gui-linux-amd64 snes2c64gui/cmd/gui
+  release:
+    - needs: [build_cli, build_gui]
+    - uses: "marvinpinto/action-automatic-releases@latest"
+      with:
+        repo_token: "${{ secrets.GITHUB_TOKEN }}"
+        automatic_release_tag: "latest"
+        prerelease: true
+        title: "Latest build on develop"
+        files: |
+          gui/snes2c64-cli-linux-amd64
+          gui/snes2c64-gui-linux-amd64
