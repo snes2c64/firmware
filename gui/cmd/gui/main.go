@@ -11,12 +11,12 @@ import (
 func main() {
 
 	myApp := app.New()
-	uploadView := views.NewUploadView()
 
 	myWindow := myApp.NewWindow("Snes2C64")
 	myWindow.Resize(fyne.NewSize(800, 400))
 	myWindow.SetFixedSize(true)
 
+	uploadView := views.NewUploadView(myWindow)
 	uploadView.Draw(myWindow)
 
 	myWindow.Show()

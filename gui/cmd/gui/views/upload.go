@@ -1,14 +1,13 @@
 package views
 
 import (
-	"log"
-	"strconv"
+	"fmt"
 
 	fyne "fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
-	"go.bug.st/serial"
 
+	"snes2c64gui/cmd/gui/components"
 	"snes2c64gui/pkg/controller"
 )
 
@@ -16,109 +15,125 @@ type UploadView struct {
 	Controller *controller.Controller
 
 	StatusBar *widget.Label
+	LogsView  *components.Logs
 
-	SerialPortsList *widget.Select
-	ConnectButton   *widget.Button
-
-	GamepadMapContainer *fyne.Container
-	Cols                int
-	Rows                int
+	ConnectModalButton fyne.CanvasObject
+	Gamepad            *components.Gamepad
 
 	UploadButton *widget.Button
 }
 
-func NewUploadView() (uv *UploadView) {
+func NewUploadView(window fyne.Window) (uv *UploadView) {
 	cols := 10
 	rows := 8
 
 	statusBar := widget.NewLabel("")
-	serialPortsList := widget.NewSelect([]string{}, func(s string) {})
-	connectButton := widget.NewButton("Connect", func() {})
+
+	connectModal := components.NewConnectModal(window.Canvas(), func(port string) {
+		handleConnect(uv, uv.Controller, port)()
+	})
+
+	gamepad := components.NewGamepad()
+
 	gamepadMapContainer := container.NewGridWithColumns(cols)
 	for i := 0; i < rows*cols; i++ {
 		gamepadMapContainer.Add(widget.NewEntry())
 	}
 	uploadButton := widget.NewButton("Upload", func() {})
+	uploadButton.Disable()
+
+	logsView := components.NewLogs()
 
 	defer func() {
 		uv.SetStatus("Starting up")
 
-		serialPorts, err := serial.GetPortsList()
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		serialPortsList.Options = serialPorts
-
-		uv.ConnectButton.OnTapped = HandleConnect(uv)
-		uv.UploadButton.OnTapped = HandleUpload(uv)
+		uv.UploadButton.OnTapped = handleUpload(uv)
 	}()
 
 	return &UploadView{
-		StatusBar:           statusBar,
-		SerialPortsList:     serialPortsList,
-		ConnectButton:       connectButton,
-		GamepadMapContainer: gamepadMapContainer,
-		Rows:                rows,
-		Cols:                cols,
-		UploadButton:        uploadButton,
+		StatusBar:          statusBar,
+		ConnectModalButton: connectModal,
+		Gamepad:            gamepad,
+		LogsView:           logsView,
+		UploadButton:       uploadButton,
 	}
 }
 
-func (m *UploadView) Draw(window fyne.Window) {
+func (uv *UploadView) Draw(window fyne.Window) {
 	window.SetContent(
-		container.NewVBox(
-			m.StatusBar,
-			container.NewHBox(
-				m.SerialPortsList,
-				m.ConnectButton,
+		container.NewHBox(
+			container.NewVBox(
+				uv.ConnectModalButton,
+				uv.Gamepad.Container,
+				uv.UploadButton,
 			),
-			m.GamepadMapContainer,
-			m.UploadButton,
+			uv.StatusBar,
 		),
 	)
 }
 
-func (m *UploadView) SetStatus(status string) {
-	m.StatusBar.SetText("Status: " + status)
+func (uv *UploadView) SetStatus(status string) {
+	uv.StatusBar.SetText("Status: " + status)
+	uv.LogsView.Add(status)
 }
 
-func (m *UploadView) EnableUpload() {
-	m.UploadButton.Enable()
+func (uv *UploadView) EnableUpload() {
+	uv.UploadButton.Enable()
 }
 
-func HandleConnect(uv *UploadView) func() {
+func (uv *UploadView) Upload() {
+	uv.SetStatus("Uploading")
+
+	err := uv.Controller.Upload(uint8(uv.Gamepad.SelectedMap()), uv.Gamepad.Map().Map())
+	if err != nil {
+		uv.SetStatus(err.Error())
+		return
+	}
+
+	uv.SetStatus("Upload complete")
+}
+
+func (uv *UploadView) Download() {
+	uv.SetStatus("Downloading")
+
+	gamepadMaps, err := uv.Controller.Download()
+	if err != nil {
+		uv.SetStatus(err.Error())
+		return
+	}
+
+	uv.Gamepad.SetMaps(gamepadMaps)
+
+	uv.SetStatus("Download complete")
+
+}
+
+func handleConnect(uv *UploadView, c *controller.Controller, port string) func() {
 	return func() {
 		var err error
 
-		uv.SetStatus("Connecting to /dev/ttyUSB0")
+		uv.SetStatus(fmt.Sprintf("Connecting to %s", port))
 
-		c, err := controller.NewController("/dev/ttyUSB0")
+		c, err := controller.NewController(port)
 		if err != nil {
-			uv.SetStatus("Failed to connect to /dev/ttyUSB0")
-		}
-		uv.SetStatus("Connected")
-
-		uv.Controller = c
-
-		gamepadMap, err := uv.Controller.Download()
-		if err != nil {
-			uv.SetStatus(err.Error())
+			uv.SetStatus(fmt.Sprintf("Error connecting to %s: %v", port, err))
 			return
 		}
+		uv.Controller = c
 
-		for i, v := range gamepadMap {
-			for j, v2 := range v {
-				uv.GamepadMapContainer.Objects[i*uv.Cols+j].(*widget.Entry).SetText(strconv.Itoa(int(v2)))
-			}
-		}
+		uv.SetStatus("Connected")
 
+		uv.Download()
+
+		uv.Gamepad.SetSelectedMap(0)
+		uv.Gamepad.Enable()
 		uv.EnableUpload()
 	}
 }
 
-func HandleUpload(uv *UploadView) func() {
+func handleUpload(uv *UploadView) func() {
 	return func() {
-		panic("not implemented")
+		uv.Upload()
+		uv.Download()
 	}
 }
