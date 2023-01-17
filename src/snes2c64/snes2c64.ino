@@ -28,7 +28,7 @@
 
 #define MAPCOUNT 8
 // clang-format off
-byte maps[8*MAPCOUNT] = {
+byte maps[10*MAPCOUNT] = {
                     /* B     */ FN_FIRE,
                     /* Y     */ FN_FIRE | FN_AUTO_FIRE,
 
