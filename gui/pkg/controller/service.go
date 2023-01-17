@@ -29,7 +29,7 @@ type Controller struct {
 func NewController(p string) (*Controller, error) {
 	port, err := serial.Open(p, &serial.Mode{})
 	if err != nil {
-		panic(err)
+		return nil, fmt.Errorf("failed to open port: %w", err)
 	}
 
 	if _, err := readUntil(port, SetupCompleteMsg); err != nil {
