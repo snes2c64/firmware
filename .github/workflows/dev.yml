@@ -25,20 +25,17 @@ jobs:
           path: gui/bin/
   build_gui:
     runs-on: ubuntu-latest
+    container:
+      image: golang:1.19-buster
+      options: --user root --workdir /usr/src/snes2c64gui
     steps:
       - uses: actions/checkout@v3
 
-      - name: Set up Go
-        uses: actions/setup-go@v3
-        with:
-          go-version: 1.19
-
       - name: Get dependencies
-        run: sudo apt-get update && sudo apt-get install gcc libgl1-mesa-dev libegl1-mesa-dev libgles2-mesa-dev libx11-dev xorg-dev libwayland-dev libxkbcommon-dev bc
-        if: ${{ runner.os == 'Linux' }}
+        run: apt-get update && apt-get install -y gcc libgl1-mesa-dev libegl1-mesa-dev libgles2-mesa-dev libx11-dev xorg-dev libwayland-dev libxkbcommon-dev bc
 
       - name: Build
-        run: cd gui; mkdir bin; go build -o bin/snes2c64-gui-linux-amd64 snes2c64gui/cmd/gui
+        run: cd gui; mkdir bin; go build -buildvcs=false -o bin/snes2c64-gui-linux-amd64 snes2c64gui/cmd/gui
 
       - name: Upload binary
         uses: actions/upload-artifact@v3
