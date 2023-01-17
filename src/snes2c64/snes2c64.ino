@@ -171,7 +171,7 @@ void handleSerial() {
       maps[mapNum * 10 + i] = Serial.read();
       Serial.print(maps[mapNum * 10 + i], HEX);
       Serial.print(" ");
-      EEPROM.update(EEPROM_OFFSET + i + 1, maps[mapNum * 10 + i]);
+      EEPROM.update(EEPROM_OFFSET + mapNum * 10 + i + 1, maps[mapNum * 10 + i]);
     }
     Serial.println();
     Serial.println("Done");
