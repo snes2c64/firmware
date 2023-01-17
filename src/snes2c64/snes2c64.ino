@@ -75,6 +75,8 @@ byte maps[8*MAPCOUNT] = {
 
 #define HZ 100
 
+#define EEPROM_OFFSET 0
+
 // END USER CONFIGURATION
 
 
@@ -103,30 +105,29 @@ byte mode = MODE_DEFAULT;
 
 void setup() {
   Serial.begin(9600);
-  //Serial.println("Starting...");
+  Serial.println("Starting...");
   pinMode(PIN_LED1, OUTPUT);
   pinMode(PIN_LED2, OUTPUT);
   pinMode(PIN_CLOCK, OUTPUT);
   pinMode(PIN_LATCH, OUTPUT);
   digitalWrite(PIN_CLOCK, HIGH);
   digitalWrite(PIN_DATA, HIGH);
-  //Serial.print("Checking if eeprom config is in the right version...");
 
-  //if (EEPROM.read(0) != EEPROM_CONFIG_VERSION) {
-  //  Serial.print("Nope, resetting to default config");
-  //  EEPROM.write(0, EEPROM_CONFIG_VERSION);
-  //  for (int i = 0; i < MAPCOUNT * 10; i++) {
-  //    EEPROM.write(i + 1, maps[i]);
-  //  }
-  //  Serial.println("Done");
-  //} else {
-  //  Serial.println("Yep, loading config.");
-  //  for (int i = 0; i < MAPCOUNT * 10; i++) {
-  //    maps[i] = EEPROM.read(i + 1);
-  //  }
+  Serial.print("Checking if eeprom config is in the right version...");
 
-
-  //}
+  if (EEPROM.read(EEPROM_OFFSET) != EEPROM_CONFIG_VERSION) {
+    Serial.print("Nope, resetting to default config");
+    EEPROM.update(EEPROM_OFFSET, EEPROM_CONFIG_VERSION);
+    for (int i = 0; i < MAPCOUNT * 10; i++) {
+      EEPROM.update(EEPROM_OFFSET + i + 1, maps[i]);
+    }
+    Serial.println("Done");
+  } else {
+    Serial.println("Yep, loading config.");
+    for (int i = 0; i < MAPCOUNT * 10; i++) {
+      maps[i] = EEPROM.read(EEPROM_OFFSET + i + 1);
+    }
+  }
   led1(1);
   delay(50);
   led2(1);
@@ -142,7 +143,6 @@ void handleSerial() {
     return;
   char c = Serial.read();
   if (c == 'd') {
-    //Serial.println("showing all maps:");
     Serial.println("START");
     for (int i = 0; i < MAPCOUNT * 10; i++) {
       if (maps[i] < 0x10) {
@@ -164,14 +164,14 @@ void handleSerial() {
     while (Serial.available() < 11) {}
     Serial.print("writing a new Map[");
     int mapNum = Serial.read();
-    mapNum = max(0, min(mapNum, MAPCOUNT));
+    mapNum = max(0, min(mapNum, MAPCOUNT - 1));
     Serial.print(mapNum, HEX);
     Serial.println("]: ");
     for (int i = 0; i < 10; i++) {
       maps[mapNum * 10 + i] = Serial.read();
       Serial.print(maps[mapNum * 10 + i], HEX);
       Serial.print(" ");
-      // EEPROM.write(i + 1, maps[i]);
+      EEPROM.update(EEPROM_OFFSET + i + 1, maps[mapNum * 10 + i]);
     }
     Serial.println();
     Serial.println("Done");
