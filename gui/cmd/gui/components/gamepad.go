@@ -146,10 +146,7 @@ func NewGamepad() *Gamepad {
 	radioGroup.Horizontal = true
 	radioGroup.SetSelected("Map 0")
 	radioGroup.Disable()
-	radioGroup.OnChanged = func(value string) {
-		gamepad.SetSelectedMap(int(value[4]) - 48)
-	}
-
+	radioGroup.OnChanged = gamepad.handleMapSelect()
 	return gamepad
 }
 
@@ -174,8 +171,8 @@ func (m *Gamepad) Map() *GamepadMap {
 	return m.gamepadMapView
 }
 
-func (m *Gamepad) handleMapSelect(mapIndex int) func() {
-	return func() {
-		m.SetSelectedMap(mapIndex)
+func (m *Gamepad) handleMapSelect() func(value string) {
+	return func(value string) {
+		m.SetSelectedMap(int(value[4]) - 48)
 	}
 }
