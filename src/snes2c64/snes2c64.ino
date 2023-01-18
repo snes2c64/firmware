@@ -259,7 +259,6 @@ void handleReset() {
   led1(false);
   led2(false);
   usedmap = 0;
-
 }
 bool handleSelect() {
   if (mode == MODE_SELECT) {
@@ -331,8 +330,35 @@ bool handleStart() {
       if (!buttons[button]) {
         continue;
       }
-      usedmap = i;
       waitForNoButtonPressed();
+      mode = MODE_DEFAULT;
+      if (
+        maps[i * 10 + 0] == FN_NOP
+        && maps[i * 10 + 1] == FN_NOP
+        && maps[i * 10 + 2] == FN_NOP
+        && maps[i * 10 + 3] == FN_NOP
+        && maps[i * 10 + 4] == FN_NOP
+        && maps[i * 10 + 5] == FN_NOP
+        && maps[i * 10 + 6] == FN_NOP
+        && maps[i * 10 + 7] == FN_NOP
+        && maps[i * 10 + 8] == FN_NOP
+        && maps[i * 10 + 9] == FN_NOP
+        ) {
+        led2(1);
+        led1(1);
+        for (byte i = 0; i < 25; i++) {
+          led1(i % 2);
+          delay(75);
+          led2(i % 2);
+        }
+
+        delay(500);
+        i = usedmap;
+      }
+
+
+
+
       led1(1);
       i++;
       while (i-- > 0) {
@@ -341,7 +367,6 @@ bool handleStart() {
         led2(0);
         delay(200);
       }
-      mode = MODE_DEFAULT;
     }
     return true;
   }
