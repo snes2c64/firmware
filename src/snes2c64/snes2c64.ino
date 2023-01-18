@@ -258,6 +258,8 @@ void handleReset() {
   waitForNoButtonPressed();
   led1(false);
   led2(false);
+  usedmap = 0;
+
 }
 bool handleSelect() {
   if (mode == MODE_SELECT) {
@@ -335,9 +337,9 @@ bool handleStart() {
       i++;
       while (i-- > 0) {
         led2(1);
-        delay(100);
+        delay(200);
         led2(0);
-        delay(100);
+        delay(200);
       }
       mode = MODE_DEFAULT;
     }
