@@ -21,7 +21,7 @@
 #define BTN_L 10
 #define BTN_R 11
 
-#define EEPROM_CONFIG_VERSION 1
+#define EEPROM_CONFIG_VERSION 2
 
 
 // START OF CONFIGURATION
@@ -333,17 +333,18 @@ bool handleStart() {
       waitForNoButtonPressed();
       mode = MODE_DEFAULT;
       if (
-        maps[i * 10 + 0] == FN_NOP
-        && maps[i * 10 + 1] == FN_NOP
-        && maps[i * 10 + 2] == FN_NOP
-        && maps[i * 10 + 3] == FN_NOP
-        && maps[i * 10 + 4] == FN_NOP
-        && maps[i * 10 + 5] == FN_NOP
-        && maps[i * 10 + 6] == FN_NOP
-        && maps[i * 10 + 7] == FN_NOP
-        && maps[i * 10 + 8] == FN_NOP
-        && maps[i * 10 + 9] == FN_NOP
-        ) {
+        (maps[i * 10 + 0] == FN_NOP || maps[i * 10 + 0] == FN_AUTO_FIRE)
+        && (maps[i * 10 + 1] == FN_NOP || maps[i * 10 + 1] == FN_AUTO_FIRE)
+        && (maps[i * 10 + 2] == FN_NOP || maps[i * 10 + 2] == FN_AUTO_FIRE)
+        && (maps[i * 10 + 3] == FN_NOP || maps[i * 10 + 3] == FN_AUTO_FIRE)
+        && (maps[i * 10 + 4] == FN_NOP || maps[i * 10 + 4] == FN_AUTO_FIRE)
+        && (maps[i * 10 + 5] == FN_NOP || maps[i * 10 + 5] == FN_AUTO_FIRE)
+        && (maps[i * 10 + 6] == FN_NOP || maps[i * 10 + 6] == FN_AUTO_FIRE)
+        && (maps[i * 10 + 7] == FN_NOP || maps[i * 10 + 7] == FN_AUTO_FIRE)
+        && (maps[i * 10 + 8] == FN_NOP || maps[i * 10 + 8] == FN_AUTO_FIRE)
+        && (maps[i * 10 + 9] == FN_NOP || maps[i * 10 + 9] == FN_AUTO_FIRE)
+
+      ) {
         led2(1);
         led1(1);
         for (byte i = 0; i < 25; i++) {
@@ -355,7 +356,7 @@ bool handleStart() {
         delay(500);
         i = usedmap;
       }
-
+      usedmap = i;
 
 
 
