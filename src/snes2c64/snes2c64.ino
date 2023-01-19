@@ -112,6 +112,7 @@ void writeMapToEEPROM() {
 }
 
 void setup() {
+  unsigned int i = 0;
   Serial.begin(9600);
   Serial.println("Starting...");
   pinMode(PIN_LED1, OUTPUT);
@@ -120,6 +121,31 @@ void setup() {
   pinMode(PIN_LATCH, OUTPUT);
   digitalWrite(PIN_CLOCK, HIGH);
   digitalWrite(PIN_DATA, HIGH);
+
+
+
+
+
+  controllerRead();
+
+
+  if (buttons[BTN_A] && buttons[BTN_B] && buttons[BTN_X] && buttons[BTN_Y] && buttons[BTN_R]) {
+    led1(1);
+    led2(1);
+    Serial.println("EEPROM reset requested, pleas release all buttons");
+    waitForNoButtonPressed();
+    Serial.println("To confirm press START, SELECT, L and R");
+    while (true) {
+      led1((i++ / 512) % 2);
+      controllerRead();
+      if (buttons[BTN_START] && buttons[BTN_SELECT] && buttons[BTN_L] && buttons[BTN_R] && !buttons[BTN_A] && !buttons[BTN_B] && !buttons[BTN_X] && !buttons[BTN_Y] && !buttons[BTN_UP] && !buttons[BTN_DOWN] && !buttons[BTN_LEFT] && !buttons[BTN_RIGHT]) {
+        Serial.println("EEPROM reset confirmed");
+        writeMapToEEPROM();
+        Serial.println("EEPROM reset done");
+        break;
+      }
+    }
+  }
 
   Serial.print("Checking if EEPROM config is in the right version...");
 
@@ -140,6 +166,7 @@ void setup() {
   led1(0);
   delay(50);
   led2(0);
+
   Serial.println("Setup complete.");
 }
 
