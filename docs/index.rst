@@ -376,4 +376,25 @@ The firmware is not actually now but brought back to the state it was in when th
 
 If using the SOFT-reset via START and SELECT will result in a different behavior then a HARD-reset via the reset button you probably have found a bug, please report it.
 
+############################
+Using the Configuration Tool
+############################
 
+***
+GUI
+***
+//TODO screenshots when ready
+
+***
+CLI
+***
+
+####################
+Resetting the EEPROM
+####################
+
+In case you want to reset the EEPROM to the default configuration within the firmware code you can do so by holding B A X Y and R while starting the adapter.
+Both LED's will light up and stay until you release the buttons.
+Now the Adapter waits for your confirmation to reset the EEPROM.
+You can do that by pressing START SELECT L and R.
+Once that's done the Adapter will reset the EEPROM and restart.
