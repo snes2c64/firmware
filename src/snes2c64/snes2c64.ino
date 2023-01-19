@@ -103,6 +103,14 @@ byte mode = MODE_DEFAULT;
 
 #include <EEPROM.h>
 
+
+void writeMapToEEPROM() {
+  EEPROM.update(EEPROM_OFFSET, EEPROM_CONFIG_VERSION);
+  for (int i = 0; i < MAPCOUNT * 10; i++) {
+    EEPROM.update(EEPROM_OFFSET + i + 1, maps[i]);
+  }
+}
+
 void setup() {
   Serial.begin(9600);
   Serial.println("Starting...");
@@ -113,14 +121,11 @@ void setup() {
   digitalWrite(PIN_CLOCK, HIGH);
   digitalWrite(PIN_DATA, HIGH);
 
-  Serial.print("Checking if eeprom config is in the right version...");
+  Serial.print("Checking if EEPROM config is in the right version...");
 
   if (EEPROM.read(EEPROM_OFFSET) != EEPROM_CONFIG_VERSION) {
-    Serial.print("Nope, resetting to default config");
-    EEPROM.update(EEPROM_OFFSET, EEPROM_CONFIG_VERSION);
-    for (int i = 0; i < MAPCOUNT * 10; i++) {
-      EEPROM.update(EEPROM_OFFSET + i + 1, maps[i]);
-    }
+    Serial.print("Nope, writing default config to EEPROM");
+    writeMapToEEPROM();
     Serial.println("Done");
   } else {
     Serial.println("Yep, loading config.");
