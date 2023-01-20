@@ -79,6 +79,7 @@ byte maps[10*MAPCOUNT] = {
 #define MODE_DEFAULT 1
 #define MODE_START 2
 #define MODE_SELECT 4
+#define MODE_AUTOFIRESPEED 8
 
 byte disabled_buttons[16];
 byte buttons[16];
@@ -215,7 +216,10 @@ void loop() {
   displayAnyButtonPressed();
   handleReset();
 
-  if (mode != MODE_START && handleSelect())
+  if (!(mode & MODE_START) && handleSelect())
+    return;
+
+  if ((mode & MODE_AUTOFIRESPEED) && handleAutoFireSet())
     return;
 
   if (handleStart())
@@ -315,30 +319,61 @@ bool handleSelect() {
   return false;
 }
 
+bool handleAutoFireSet() {
+  if (!(mode & MODE_AUTOFIRESPEED)) {
+    return false;
+  }
+  unsigned long nextValueTick = millis();
+  bool startreleasedOnce = false;
+  do {
+    for (byte i = BTN_L; i <= BTN_R; i++) {
+
+      if (buttons[i]) {
+        modeFallback = millis() + 3000;
+        if (millis() > nextValueTick) {
+          autofireDelay += i == BTN_L ? -1 : 1;
+          autofireDelay =
+              max(min(autofireDelay, MAX_AUTO_FIRE_DELAY), MIN_AUTO_FIRE_DELAY);
+          nextValueTick = millis() + 500;
+        }
+      }
+      handleDelay();
+      controllerRead();
+      if (startreleasedOnce && buttons[BTN_START]) {
+        mode = MODE_DEFAULT;
+        waitForNoButtonPressed();
+        return true;
+      }
+      if (!buttons[BTN_START]) {
+        startreleasedOnce = true;
+      }
+      handleAutofireFlip();
+      led1(autofire);
+      led2(autofire);
+    }
+  } while (modeFallback > millis());
+  led2(0);
+  led1(0);
+  mode = MODE_DEFAULT;
+
+  return true;
+}
+
 bool handleStart() {
   if (buttons[BTN_START]) {
     mode = MODE_START;
     modeFallback = millis() + 3000;
     led1(1);
     for (byte i = BTN_L; i <= BTN_R; i++) {
+
       if (buttons[i]) {
-        autofireDelay += i == BTN_L ? -1 : 1;
-        autofireDelay =
-            max(min(autofireDelay, MAX_AUTO_FIRE_DELAY), MIN_AUTO_FIRE_DELAY);
-        do {
-          handleDelay();
-          controllerRead();
-          handleAutofireFlip();
-          led2(autofire);
-        } while (buttons[i]);
-        led2(0);
-        led1(0);
-        mode = MODE_DEFAULT;
+        mode = MODE_START | MODE_AUTOFIRESPEED;
+        return handleAutoFireSet();
       }
     }
     return true;
   }
-  if (mode == MODE_START) {
+  if (mode & MODE_START) {
     unsigned long diff = modeFallback - millis();
     diff /= 100;
     led1(diff % 2);
