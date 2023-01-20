@@ -357,8 +357,12 @@ If SELECT is pressed accidentally and you don't want to wait 2 seconds you can s
 Setting Autofire Speed
 **********************
 
-You can set the autofire speed by pressing and holding START and pressing L or R for faster or slower.
-while holding L or R LED1 is on and LED2 is flashing the speed.
+You can set the autofire speed by pressing and holding START and pressing L or R.
+Both LEDs start flashing with the Autofire speed.
+You can release START now.
+You can now change the speed by pressing L or R, either single stepping or just holding one of them down.
+AutofireSettingMode stops when neither L or R is pressed for 3 seconds or you press start again.
+
 
 
 *********************
@@ -388,6 +392,8 @@ GUI
 ***
 CLI
 ***
+
+//TODO
 
 ####################
 Resetting the EEPROM
