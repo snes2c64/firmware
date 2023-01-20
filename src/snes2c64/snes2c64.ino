@@ -31,7 +31,6 @@
 byte maps[10*MAPCOUNT] = {
                     /* B     */ FN_FIRE,
                     /* Y     */ FN_FIRE | FN_AUTO_FIRE,
-
                     /* ️️UP    */ FN_UP,
                     /* DOWN  */ FN_DOWN,
                     /* LEFT  */ FN_LEFT,
