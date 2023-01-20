@@ -385,7 +385,7 @@ bool handleStart() {
           led2(i % 2);
         }
 
-        delay(500);
+        delay(1000);
         i = usedmap;
       }
       usedmap = i;
