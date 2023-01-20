@@ -23,7 +23,6 @@
 
 #define EEPROM_CONFIG_VERSION 2
 
-
 // START OF CONFIGURATION
 
 #define MAPCOUNT 8
@@ -53,7 +52,6 @@ byte maps[10*MAPCOUNT] = {
                     };
 // clang-format on
 
-
 #define PIN_LED2 13
 #define PIN_LED1 12
 #define PIN_CLOCK 11
@@ -78,13 +76,9 @@ byte maps[10*MAPCOUNT] = {
 
 // END USER CONFIGURATION
 
-
 #define MODE_DEFAULT 1
 #define MODE_START 2
 #define MODE_SELECT 4
-
-
-
 
 byte disabled_buttons[16];
 byte buttons[16];
@@ -98,10 +92,7 @@ byte autofireDelay = AUTO_FIRE_DELAY_START;
 byte usedmap;
 byte mode = MODE_DEFAULT;
 
-
-
 #include <EEPROM.h>
-
 
 void writeMapToEEPROM() {
   EEPROM.update(EEPROM_OFFSET, EEPROM_CONFIG_VERSION);
@@ -121,14 +112,10 @@ void setup() {
   digitalWrite(PIN_CLOCK, HIGH);
   digitalWrite(PIN_DATA, HIGH);
 
-
-
-
-
   controllerRead();
 
-
-  if (buttons[BTN_A] && buttons[BTN_B] && buttons[BTN_X] && buttons[BTN_Y] && buttons[BTN_R]) {
+  if (buttons[BTN_A] && buttons[BTN_B] && buttons[BTN_X] && buttons[BTN_Y] &&
+      buttons[BTN_R]) {
     led1(1);
     led2(1);
     Serial.println("EEPROM reset requested, pleas release all buttons");
@@ -137,7 +124,10 @@ void setup() {
     while (true) {
       led1((i++ / 512) % 2);
       controllerRead();
-      if (buttons[BTN_START] && buttons[BTN_SELECT] && buttons[BTN_L] && buttons[BTN_R] && !buttons[BTN_A] && !buttons[BTN_B] && !buttons[BTN_X] && !buttons[BTN_Y] && !buttons[BTN_UP] && !buttons[BTN_DOWN] && !buttons[BTN_LEFT] && !buttons[BTN_RIGHT]) {
+      if (buttons[BTN_START] && buttons[BTN_SELECT] && buttons[BTN_L] &&
+          buttons[BTN_R] && !buttons[BTN_A] && !buttons[BTN_B] &&
+          !buttons[BTN_X] && !buttons[BTN_Y] && !buttons[BTN_UP] &&
+          !buttons[BTN_DOWN] && !buttons[BTN_LEFT] && !buttons[BTN_RIGHT]) {
         Serial.println("EEPROM reset confirmed");
         writeMapToEEPROM();
         Serial.println("EEPROM reset done");
@@ -192,7 +182,8 @@ void handleSerial() {
 
   if (c == 'u') {
 
-    while (Serial.available() < 11) {}
+    while (Serial.available() < 11) {
+    }
     Serial.print("writing a new Map[");
     int mapNum = Serial.read();
     mapNum = max(0, min(mapNum, MAPCOUNT - 1));
@@ -224,19 +215,17 @@ void loop() {
   displayAnyButtonPressed();
   handleReset();
 
-  if (mode != MODE_START && handleSelect()) return;
+  if (mode != MODE_START && handleSelect())
+    return;
 
-
-
-  if (handleStart()) return;
-
+  if (handleStart())
+    return;
 
   for (byte i = 0; i < 16; i++) {
     if (disabled_buttons[i]) {
       buttons[i] = 0;
     }
   }
-
 
   for (byte i = 0; i < 10; i++) {
     byte button = i >= BTN_SELECT ? i + 2 : i;
@@ -271,7 +260,8 @@ void handleAutofireFlip() {
 }
 
 void handleReset() {
-  if (!buttons[BTN_SELECT] || !buttons[BTN_START]) return;
+  if (!buttons[BTN_SELECT] || !buttons[BTN_START])
+    return;
   mode = MODE_DEFAULT;
   autofireDelay = AUTO_FIRE_DELAY_START;
   autofire = false;
@@ -302,8 +292,10 @@ bool handleSelect() {
     diff /= 100;
     led2(diff % 2);
     for (byte i = 0; i < 16; i++) {
-      if (i == BTN_SELECT || i == BTN_START) continue;
-      if (!buttons[i]) continue;
+      if (i == BTN_SELECT || i == BTN_START)
+        continue;
+      if (!buttons[i])
+        continue;
       disabled_buttons[i] = !disabled_buttons[i];
       led1(!disabled_buttons[i]);
       led2(true);
@@ -323,7 +315,6 @@ bool handleSelect() {
   return false;
 }
 
-
 bool handleStart() {
   if (buttons[BTN_START]) {
     mode = MODE_START;
@@ -333,7 +324,7 @@ bool handleStart() {
       if (buttons[i]) {
         autofireDelay += i == BTN_L ? -1 : 1;
         autofireDelay =
-          max(min(autofireDelay, MAX_AUTO_FIRE_DELAY), MIN_AUTO_FIRE_DELAY);
+            max(min(autofireDelay, MAX_AUTO_FIRE_DELAY), MIN_AUTO_FIRE_DELAY);
         do {
           handleDelay();
           controllerRead();
@@ -363,17 +354,16 @@ bool handleStart() {
       }
       waitForNoButtonPressed();
       mode = MODE_DEFAULT;
-      if (
-        (maps[i * 10 + 0] == FN_NOP || maps[i * 10 + 0] == FN_AUTO_FIRE)
-        && (maps[i * 10 + 1] == FN_NOP || maps[i * 10 + 1] == FN_AUTO_FIRE)
-        && (maps[i * 10 + 2] == FN_NOP || maps[i * 10 + 2] == FN_AUTO_FIRE)
-        && (maps[i * 10 + 3] == FN_NOP || maps[i * 10 + 3] == FN_AUTO_FIRE)
-        && (maps[i * 10 + 4] == FN_NOP || maps[i * 10 + 4] == FN_AUTO_FIRE)
-        && (maps[i * 10 + 5] == FN_NOP || maps[i * 10 + 5] == FN_AUTO_FIRE)
-        && (maps[i * 10 + 6] == FN_NOP || maps[i * 10 + 6] == FN_AUTO_FIRE)
-        && (maps[i * 10 + 7] == FN_NOP || maps[i * 10 + 7] == FN_AUTO_FIRE)
-        && (maps[i * 10 + 8] == FN_NOP || maps[i * 10 + 8] == FN_AUTO_FIRE)
-        && (maps[i * 10 + 9] == FN_NOP || maps[i * 10 + 9] == FN_AUTO_FIRE)
+      if ((maps[i * 10 + 0] == FN_NOP || maps[i * 10 + 0] == FN_AUTO_FIRE) &&
+          (maps[i * 10 + 1] == FN_NOP || maps[i * 10 + 1] == FN_AUTO_FIRE) &&
+          (maps[i * 10 + 2] == FN_NOP || maps[i * 10 + 2] == FN_AUTO_FIRE) &&
+          (maps[i * 10 + 3] == FN_NOP || maps[i * 10 + 3] == FN_AUTO_FIRE) &&
+          (maps[i * 10 + 4] == FN_NOP || maps[i * 10 + 4] == FN_AUTO_FIRE) &&
+          (maps[i * 10 + 5] == FN_NOP || maps[i * 10 + 5] == FN_AUTO_FIRE) &&
+          (maps[i * 10 + 6] == FN_NOP || maps[i * 10 + 6] == FN_AUTO_FIRE) &&
+          (maps[i * 10 + 7] == FN_NOP || maps[i * 10 + 7] == FN_AUTO_FIRE) &&
+          (maps[i * 10 + 8] == FN_NOP || maps[i * 10 + 8] == FN_AUTO_FIRE) &&
+          (maps[i * 10 + 9] == FN_NOP || maps[i * 10 + 9] == FN_AUTO_FIRE)
 
       ) {
         led2(1);
@@ -389,8 +379,6 @@ bool handleStart() {
       }
       usedmap = i;
 
-
-
       led1(1);
       i++;
       while (i-- > 0) {
@@ -404,12 +392,8 @@ bool handleStart() {
   }
   return false;
 }
-void led1(bool on) {
-  digitalWrite(PIN_LED1, on);
-}
-void led2(bool on) {
-  digitalWrite(PIN_LED2, on);
-}
+void led1(bool on) { digitalWrite(PIN_LED1, on); }
+void led2(bool on) { digitalWrite(PIN_LED2, on); }
 
 void waitForNoButtonPressed() {
   bool pressed;
