@@ -26,7 +26,7 @@ It contains of multiple Parts:
       -  2 LED's with resistors
       -  a 9 pin D-Sub connector to connect to the C64
       -  a SNES connector
-      -  and last but not least a PCB kindly layouted by @OliverW
+      -  and last but not least a PCB kindly layouted by `OliverW. <https://www.forum64.de/wcf/index.php?user/1989-oliverw/>`_
 
    -  Firmware for the Arduino Nano
    -  a cli and gui application to configure the adapter
