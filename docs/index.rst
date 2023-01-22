@@ -62,7 +62,7 @@ LED's are optional but are nice to get feedback from the adapter.
  bill of materials
 *******************
 
-Sized are only critical if you use OliverW's Gerbers, otherwise you can use whatever you want.
+Sized are only critical if you use OliverW.'s Gerbers, otherwise you can use whatever you want.
    -  Arduino Nano
 
    -  2 LED's either 3mm or //TODO smd size, 2 different colors
