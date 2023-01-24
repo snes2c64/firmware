@@ -1,14 +1,9 @@
 .PHONY: upload reformat build configExtractor
 
 upload:
-	platformio run -t upload
+	arduino-cli upload -b arduino:avr:nano:cpu=atmega328old -p /dev/ttyUSB* firmware/
 reformat:
-	clang-format --sort-includes --style=LLVM src/snes2c64/snes2c64.ino | sponge src/snes2c64/snes2c64.ino
-
+	clang-format --sort-includes --style=LLVM firmware/firmware.ino | sponge firmware/firmware.ino
 build:
-	platformio run
+	arduino-cli compile -b arduino:avr:nano:cpu=atmega328old --output-dir dist firmware/
 
-configExtractor:
-	gcc genDoc.c
-	./a.out | ./config.php
-	rm a.out
