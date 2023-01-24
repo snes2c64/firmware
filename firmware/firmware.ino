@@ -27,7 +27,7 @@
 
 #define MAPCOUNT 8
 // clang-format off
-byte maps[10*MAPCOUNT] = {
+const byte defaultMaps[10*MAPCOUNT] = {
                     /* B     */ FN_FIRE,
                     /* Y     */ FN_FIRE | FN_AUTO_FIRE,
                     /* ️️UP    */ FN_UP,
@@ -92,6 +92,7 @@ byte autofireCounter;
 byte autofireDelay = AUTO_FIRE_DELAY_START;
 byte usedmap;
 byte mode = MODE_DEFAULT;
+byte maps[10 * MAPCOUNT];
 
 #include <EEPROM.h>
 
@@ -99,6 +100,12 @@ void writeMapToEEPROM() {
   EEPROM.update(EEPROM_OFFSET, EEPROM_CONFIG_VERSION);
   for (int i = 0; i < MAPCOUNT * 10; i++) {
     EEPROM.update(EEPROM_OFFSET + i + 1, maps[i]);
+  }
+}
+
+void setMapsToDefault() {
+  for (int i = 0; i < MAPCOUNT * 10; i++) {
+    maps[i] = defaultMaps[i];
   }
 }
 
@@ -114,6 +121,9 @@ void setup() {
   digitalWrite(PIN_DATA, HIGH);
 
   controllerRead();
+
+  setMapsToDefault();
+  Serial.println(maps[0], HEX);
 
   if (buttons[BTN_A] && buttons[BTN_B] && buttons[BTN_X] && buttons[BTN_Y] &&
       buttons[BTN_R]) {
@@ -136,7 +146,6 @@ void setup() {
       }
     }
   }
-
   Serial.print("Checking if EEPROM config is in the right version...");
 
   if (EEPROM.read(EEPROM_OFFSET) != EEPROM_CONFIG_VERSION) {
@@ -149,6 +158,9 @@ void setup() {
       maps[i] = EEPROM.read(EEPROM_OFFSET + i + 1);
     }
   }
+  Serial.println(maps[0], HEX);
+  fixMaps();
+  Serial.println(maps[0], HEX);
   led1(1);
   delay(50);
   led2(1);
@@ -156,6 +168,7 @@ void setup() {
   led1(0);
   delay(50);
   led2(0);
+  changeMap(getFirstNonEmptyMap());
 
   Serial.println("Setup complete.");
 }
@@ -196,11 +209,57 @@ void handleSerial() {
       Serial.print(" ");
       EEPROM.update(EEPROM_OFFSET + mapNum * 10 + i + 1, maps[mapNum * 10 + i]);
     }
+    if (checkMapEmpty(mapNum)) {
+      int nextMap = getFirstNonEmptyMap();
+      if (nextMap != -1) {
+        changeMap(nextMap);
+      } else {
+        changeMap(fixMaps());
+      }
+    }
     Serial.println();
     Serial.println("Done");
     return;
   }
   Serial.println("Unknown command");
+}
+
+int getFirstNonEmptyMap() {
+  for (int i = 0; i < MAPCOUNT; i++) {
+    if (!checkMapEmpty(i)) {
+      return i;
+    }
+  }
+  return -1;
+}
+
+int fixMaps() {
+  int nextMap = getFirstNonEmptyMap();
+  if (nextMap < 0) {
+    setMapsToDefault();
+    writeMapToEEPROM();
+    return getFirstNonEmptyMap();
+  }
+}
+
+bool changeMap(int mapNum) {
+  int i;
+  if (mapNum < 0 || mapNum >= MAPCOUNT) {
+    return false;
+  }
+  if (checkMapEmpty(mapNum)) {
+    return false;
+  }
+  usedmap = mapNum;
+  led1(1);
+  i++;
+  while (i-- > 0) {
+    led2(1);
+    delay(200);
+    led2(0);
+    delay(200);
+  }
+  return true;
 }
 
 void loop() {
@@ -283,7 +342,7 @@ void handleReset() {
   waitForNoButtonPressed();
   led1(false);
   led2(false);
-  usedmap = 0;
+  changeMap(getFirstNonEmptyMap());
 }
 bool handleSelect() {
   if (mode == MODE_SELECT) {
@@ -389,18 +448,7 @@ bool handleStart() {
       }
       waitForNoButtonPressed();
       mode = MODE_DEFAULT;
-      if ((maps[i * 10 + 0] == FN_NOP || maps[i * 10 + 0] == FN_AUTO_FIRE) &&
-          (maps[i * 10 + 1] == FN_NOP || maps[i * 10 + 1] == FN_AUTO_FIRE) &&
-          (maps[i * 10 + 2] == FN_NOP || maps[i * 10 + 2] == FN_AUTO_FIRE) &&
-          (maps[i * 10 + 3] == FN_NOP || maps[i * 10 + 3] == FN_AUTO_FIRE) &&
-          (maps[i * 10 + 4] == FN_NOP || maps[i * 10 + 4] == FN_AUTO_FIRE) &&
-          (maps[i * 10 + 5] == FN_NOP || maps[i * 10 + 5] == FN_AUTO_FIRE) &&
-          (maps[i * 10 + 6] == FN_NOP || maps[i * 10 + 6] == FN_AUTO_FIRE) &&
-          (maps[i * 10 + 7] == FN_NOP || maps[i * 10 + 7] == FN_AUTO_FIRE) &&
-          (maps[i * 10 + 8] == FN_NOP || maps[i * 10 + 8] == FN_AUTO_FIRE) &&
-          (maps[i * 10 + 9] == FN_NOP || maps[i * 10 + 9] == FN_AUTO_FIRE)
-
-      ) {
+      if (checkMapEmpty(i)) {
         led2(1);
         led1(1);
         for (byte i = 0; i < 25; i++) {
@@ -412,21 +460,26 @@ bool handleStart() {
         delay(1000);
         i = usedmap;
       }
-      usedmap = i;
-
-      led1(1);
-      i++;
-      while (i-- > 0) {
-        led2(1);
-        delay(200);
-        led2(0);
-        delay(200);
-      }
+      changeMap(i);
     }
     return true;
   }
   return false;
 }
+
+bool checkMapEmpty(byte i) {
+  return (maps[i * 10 + 0] == FN_NOP || maps[i * 10 + 0] == FN_AUTO_FIRE) &&
+         (maps[i * 10 + 1] == FN_NOP || maps[i * 10 + 1] == FN_AUTO_FIRE) &&
+         (maps[i * 10 + 2] == FN_NOP || maps[i * 10 + 2] == FN_AUTO_FIRE) &&
+         (maps[i * 10 + 3] == FN_NOP || maps[i * 10 + 3] == FN_AUTO_FIRE) &&
+         (maps[i * 10 + 4] == FN_NOP || maps[i * 10 + 4] == FN_AUTO_FIRE) &&
+         (maps[i * 10 + 5] == FN_NOP || maps[i * 10 + 5] == FN_AUTO_FIRE) &&
+         (maps[i * 10 + 6] == FN_NOP || maps[i * 10 + 6] == FN_AUTO_FIRE) &&
+         (maps[i * 10 + 7] == FN_NOP || maps[i * 10 + 7] == FN_AUTO_FIRE) &&
+         (maps[i * 10 + 8] == FN_NOP || maps[i * 10 + 8] == FN_AUTO_FIRE) &&
+         (maps[i * 10 + 9] == FN_NOP || maps[i * 10 + 9] == FN_AUTO_FIRE);
+}
+
 void led1(bool on) { digitalWrite(PIN_LED1, on); }
 void led2(bool on) { digitalWrite(PIN_LED2, on); }
 
