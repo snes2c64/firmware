@@ -63,8 +63,8 @@ byte maps[10*MAPCOUNT] = {
 #define PIN_LEFT 5
 #define PIN_RIGHT 2
 #define PIN_FIRE 7
-#define PIN_FIRE2 4
-#define PIN_FIRE3 3
+#define PIN_FIRE2 3
+#define PIN_FIRE3 4
 
 #define MIN_AUTO_FIRE_DELAY 2
 #define MAX_AUTO_FIRE_DELAY 64
@@ -334,7 +334,7 @@ bool handleAutoFireSet() {
           autofireDelay += i == BTN_L ? -1 : 1;
           autofireDelay =
               max(min(autofireDelay, MAX_AUTO_FIRE_DELAY), MIN_AUTO_FIRE_DELAY);
-          nextValueTick = millis() + 500;
+          nextValueTick = millis() + 250;
         }
       }
       handleDelay();
