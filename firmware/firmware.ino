@@ -95,6 +95,7 @@ byte mode = MODE_DEFAULT;
 byte maps[10 * MAPCOUNT];
 
 #include <EEPROM.h>
+#include "version.h"
 
 void writeMapToEEPROM() {
   EEPROM.update(EEPROM_OFFSET, EEPROM_CONFIG_VERSION);
@@ -112,7 +113,8 @@ void setMapsToDefault() {
 void setup() {
   unsigned int i = 0;
   Serial.begin(9600);
-  Serial.println("Starting...");
+  Serial.print("Starting SNES2C64 Firmware v");
+  Serial.println(VERSION);
   pinMode(PIN_LED1, OUTPUT);
   pinMode(PIN_LED2, OUTPUT);
   pinMode(PIN_CLOCK, OUTPUT);
@@ -123,7 +125,6 @@ void setup() {
   controllerRead();
 
   setMapsToDefault();
-  Serial.println(maps[0], HEX);
 
   if (buttons[BTN_A] && buttons[BTN_B] && buttons[BTN_X] && buttons[BTN_Y] &&
       buttons[BTN_R]) {
@@ -158,9 +159,7 @@ void setup() {
       maps[i] = EEPROM.read(EEPROM_OFFSET + i + 1);
     }
   }
-  Serial.println(maps[0], HEX);
   fixMaps();
-  Serial.println(maps[0], HEX);
   led1(1);
   delay(50);
   led2(1);
@@ -177,6 +176,10 @@ void handleSerial() {
   if (!Serial.available())
     return;
   char c = Serial.read();
+  if (c == 'v') {
+    Serial.print("SNES2C64 Firmware v");
+    Serial.println(VERSION);
+  }
   if (c == 'd') {
     Serial.println("START");
     for (int i = 0; i < MAPCOUNT * 10; i++) {

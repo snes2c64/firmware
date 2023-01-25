@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+if [[ -z "$1" ]]; then
+
+	name="$(./getVersionName)"
+
+	find dist -type f -name "firmware.ino*" -exec "$0" "{}" "$name" \;
+	exit
+fi
+
+old_name="$1"
+new_name="dist/SNES2C64-Firmware-$2${1:13}"
+
+mv "$old_name" "$new_name"

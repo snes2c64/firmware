@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+name="$(./versioner)"
+git tag --points-at HEAD | grep -q . || {
+	name="$(./versioner -a "-$(git rev-parse --abbrev-ref HEAD)-$(git rev-parse --short HEAD)")"
+}
+echo "$name"
