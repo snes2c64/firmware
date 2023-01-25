@@ -179,6 +179,8 @@ void handleSerial() {
   if (c == 'v') {
     Serial.print("SNES2C64 Firmware v");
     Serial.println(VERSION);
+    Serial.print("EEPROM config version: ");
+    Serial.println(EEPROM_CONFIG_VERSION);
   }
   if (c == 'd') {
     Serial.println("START");
