@@ -248,7 +248,6 @@ int fixMaps() {
 }
 
 bool changeMap(int mapNum) {
-  int i;
   if (mapNum < 0 || mapNum >= MAPCOUNT) {
     return false;
   }
@@ -257,8 +256,7 @@ bool changeMap(int mapNum) {
   }
   usedmap = mapNum;
   led1(1);
-  i++;
-  while (i-- > 0) {
+  while (mapNum-- >= 0) {
     led2(1);
     delay(200);
     led2(0);
