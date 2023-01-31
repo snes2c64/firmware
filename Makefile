@@ -2,7 +2,7 @@
 
 
 
-upload: installadruinodep firmware/version.h
+upload: installadruinodep build firmware/version.h
 	arduino-cli upload -b arduino:avr:nano:cpu=atmega328old -p /dev/ttyUSB* firmware/
 reformat:
 	clang-format --sort-includes --style=LLVM firmware/firmware.ino | sponge firmware/firmware.ino
