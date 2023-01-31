@@ -181,6 +181,8 @@ void handleSerial() {
     Serial.println(VERSION);
     Serial.print("EEPROM config version: ");
     Serial.println(EEPROM_CONFIG_VERSION);
+    Serial.println("VERSION_END");
+    return;
   }
   if (c == 'd') {
     Serial.println("START");
