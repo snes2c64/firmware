@@ -58,13 +58,29 @@ const byte defaultMaps[10*MAPCOUNT] = {
 #define PIN_LATCH 10
 #define PIN_DATA 9
 
-#define PIN_UP 8
-#define PIN_DOWN 6
-#define PIN_LEFT 5
-#define PIN_RIGHT 2
-#define PIN_FIRE 7
-#define PIN_FIRE2 3
-#define PIN_FIRE3 4
+#define V1_PIN_UP 8
+#define V1_PIN_DOWN 6
+#define V1_PIN_LEFT 5
+#define V1_PIN_RIGHT 2
+#define V1_PIN_FIRE 7
+#define V1_PIN_FIRE2 3
+#define V1_PIN_FIRE3 4
+
+#define V2_PIN_UP 8
+#define V2_PIN_DOWN 6
+#define V2_PIN_LEFT 5
+#define V2_PIN_RIGHT 4
+#define V2_PIN_FIRE 7
+#define V2_PIN_FIRE2 3
+#define V2_PIN_FIRE3 2
+
+byte PIN_UP;
+byte PIN_DOWN;
+byte PIN_LEFT;
+byte PIN_RIGHT;
+byte PIN_FIRE;
+byte PIN_FIRE2;
+byte PIN_FIRE3;
 
 #define MIN_AUTO_FIRE_DELAY 2
 #define MAX_AUTO_FIRE_DELAY 64
@@ -97,6 +113,31 @@ byte maps[10 * MAPCOUNT];
 #include <EEPROM.h>
 #include "version.h"
 
+void assignC64Pins() {
+  pinMode(A0, INPUT);
+  digitalWrite(A0, HIGH);
+  if (digitalRead(A0)) {
+    Serial.println("V1");
+    PIN_UP = V1_PIN_UP;
+    PIN_DOWN = V1_PIN_DOWN;
+    PIN_LEFT = V1_PIN_LEFT;
+    PIN_RIGHT = V1_PIN_RIGHT;
+    PIN_FIRE = V1_PIN_FIRE;
+    PIN_FIRE2 = V1_PIN_FIRE2;
+    PIN_FIRE3 = V1_PIN_FIRE3;
+
+  } else {
+  Serial.println("V2");
+    PIN_UP = V2_PIN_UP;
+    PIN_DOWN = V2_PIN_DOWN;
+    PIN_LEFT = V2_PIN_LEFT;
+    PIN_RIGHT = V2_PIN_RIGHT;
+    PIN_FIRE = V2_PIN_FIRE;
+    PIN_FIRE2 = V2_PIN_FIRE2;
+    PIN_FIRE3 = V2_PIN_FIRE3;
+  }
+}
+
 void writeMapToEEPROM() {
   EEPROM.update(EEPROM_OFFSET, EEPROM_CONFIG_VERSION);
   for (int i = 0; i < MAPCOUNT * 10; i++) {
@@ -111,10 +152,14 @@ void setMapsToDefault() {
 }
 
 void setup() {
+
   unsigned int i = 0;
   Serial.begin(9600);
   Serial.print("Starting SNES2C64 Firmware v");
+
   Serial.println(VERSION);
+  assignC64Pins();
+
   pinMode(PIN_LED1, OUTPUT);
   pinMode(PIN_LED2, OUTPUT);
   pinMode(PIN_CLOCK, OUTPUT);
