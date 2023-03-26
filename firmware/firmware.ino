@@ -8,47 +8,50 @@
 #define FN_FIRE3 64
 #define FN_AUTO_FIRE 128
 
-#define BTN_B 0
-#define BTN_Y 1
-#define BTN_SELECT 2
-#define BTN_START 3
-#define BTN_UP 4
-#define BTN_DOWN 5
-#define BTN_LEFT 6
-#define BTN_RIGHT 7
-#define BTN_A 8
-#define BTN_X 9
-#define BTN_L 10
-#define BTN_R 11
+#define BTN_UP 0
+#define BTN_DOWN 1
+#define BTN_LEFT 2
+#define BTN_RIGHT 3
+#define BTN_B 4
+#define BTN_A 5
+#define BTN_X 6
+#define BTN_Y 7
+#define BTN_L 8
+#define BTN_R 9
+#define BTN_SELECT 10
+#define BTN_START 11
 
-#define EEPROM_CONFIG_VERSION 2
+#define EEPROM_CONFIG_VERSION 3
 
 // START OF CONFIGURATION
 
 #define MAPCOUNT 8
 // clang-format off
 const byte defaultMaps[10*MAPCOUNT] = {
-                    /* B     */ FN_FIRE,
-                    /* Y     */ FN_FIRE | FN_AUTO_FIRE,
                     /* ️️UP    */ FN_UP,
                     /* DOWN  */ FN_DOWN,
                     /* LEFT  */ FN_LEFT,
                     /* RIGHT */ FN_RIGHT,
+                    /* B     */ FN_FIRE,
                     /* A     */ FN_FIRE2,
+                    /* Y     */ FN_FIRE | FN_AUTO_FIRE,
                     /* X     */ FN_FIRE2 | FN_AUTO_FIRE,
                     /* L     */ FN_FIRE3 | FN_AUTO_FIRE,
                     /* R     */ FN_FIRE3,
 
-                    /* B     */ FN_FIRE,
-                    /* Y     */ FN_UP,
                     /* ️️UP    */ FN_UP,
                     /* DOWN  */ FN_DOWN,
                     /* LEFT  */ FN_LEFT,
                     /* RIGHT */ FN_RIGHT,
+                    /* B     */ FN_FIRE,
                     /* A     */ FN_FIRE | FN_AUTO_FIRE,
+                    /* Y     */ FN_UP,
                     /* X     */ FN_FIRE2,
                     /* L     */ FN_FIRE3,
                     /* R     */ FN_FIRE3,
+
+
+
                     };
 // clang-format on
 
@@ -127,7 +130,7 @@ void assignC64Pins() {
     PIN_FIRE3 = V1_PIN_FIRE3;
 
   } else {
-  Serial.println("V2");
+    Serial.println("V2");
     PIN_UP = V2_PIN_UP;
     PIN_DOWN = V2_PIN_DOWN;
     PIN_LEFT = V2_PIN_LEFT;
@@ -341,12 +344,11 @@ void loop() {
   }
 
   for (byte i = 0; i < 10; i++) {
-    byte button = i >= BTN_SELECT ? i + 2 : i;
     byte fn = maps[i + 10 * usedmap];
     byte hasAutofire = fn & FN_AUTO_FIRE;
     fn = fn & ~FN_AUTO_FIRE;
 
-    action(fn, buttons[button], hasAutofire);
+    action(fn, buttons[i], hasAutofire);
   }
 
   sendNewState();
@@ -492,8 +494,7 @@ bool handleStart() {
       return true;
     }
     for (byte i = 0; i < min(8, MAPCOUNT); i++) {
-      byte button = i < BTN_SELECT ? i : i + 2;
-      if (!buttons[button]) {
+      if (!buttons[i]) {
         continue;
       }
       waitForNoButtonPressed();
@@ -563,7 +564,7 @@ void displayAnySignalSend() {
 void controllerRead() {
   digitalWrite(PIN_LATCH, HIGH);
   // there should be a 12µs delay between latch high and latch low, but since
-  // digitaslWrite takes about 5µs this is fine
+  // digitalWrite takes about 5µs this is fine
   delayMicroseconds(7);
   digitalWrite(PIN_LATCH, LOW);
 
@@ -571,13 +572,56 @@ void controllerRead() {
   // controller to work properly.
   // we just read them in normally knowing well they always be 0, but this is
   // simpler and faster than branching of
-
+  byte logicalButtonNumer;
   for (byte i = 0; i < 16; i++) {
-    // there should be a 6µs delay between click high and low.
+    // there should be a 6µs delay between clock high and low.
     // since a digital write takes about 5µs this is fine without delay
     digitalWrite(PIN_CLOCK, LOW);
+    // gamepad button order: B Y SELECT START UP DOWN LEFT RIGHT A X L R
+    // logical button order: UP DOWN LEFT RIGHT B A Y X L R SELECT START
 
-    buttons[i] = !digitalRead(PIN_DATA);
+    switch (i) {
+    case 0:
+      logicalButtonNumer = 4;
+      break; // B
+    case 1:
+      logicalButtonNumer = 6;
+      break; // Y
+    case 2:
+      logicalButtonNumer = 10;
+      break; // SEL
+    case 3:
+      logicalButtonNumer = 11;
+      break; // STA
+    case 4:
+      logicalButtonNumer = 0;
+      break; // UP
+    case 5:
+      logicalButtonNumer = 1;
+      break; // DO
+    case 6:
+      logicalButtonNumer = 2;
+      break; // LE
+    case 7:
+      logicalButtonNumer = 3;
+      break; // RI
+    case 8:
+      logicalButtonNumer = 5;
+      break; // A
+    case 9:
+      logicalButtonNumer = 7;
+      break; // X
+    case 10:
+      logicalButtonNumer = 8;
+      break; // L
+    case 11:
+      logicalButtonNumer = 9;
+      break; // R
+    default:
+      logicalButtonNumer = i;
+    }
+    buttons[logicalButtonNumer] = !digitalRead(PIN_DATA);
+    // buttons[i] = !digitalRead(PIN_DATA);
     digitalWrite(PIN_CLOCK, HIGH);
   }
 }
@@ -586,8 +630,6 @@ void action(byte fn, bool pressed, bool isautofire) {
   for (byte i = 0; i < 7; i++) {
     if (fn & (1 << i)) {
       newState[i] = newState[i] || (pressed && (!isautofire || autofire));
-      if (newState[i]) {
-      }
     }
   }
 }
