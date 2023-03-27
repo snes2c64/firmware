@@ -26,6 +26,7 @@
 // START OF CONFIGURATION
 
 #define MAPCOUNT 8
+#define MAP_SAVE_ADDRESS EEPROM_OFFSET + 1 + MAPCOUNT * 10
 // clang-format off
 const byte defaultMaps[10*MAPCOUNT] = {
                     /* ️️UP    */ FN_UP,
@@ -50,7 +51,16 @@ const byte defaultMaps[10*MAPCOUNT] = {
                     /* L     */ FN_FIRE3,
                     /* R     */ FN_FIRE3,
 
-
+                    /* ️️UP    */ FN_UP,
+                    /* DOWN  */ FN_DOWN,
+                    /* LEFT  */ FN_LEFT,
+                    /* RIGHT */ FN_RIGHT,
+                    /* B     */ FN_UP,
+                    /* A     */ FN_FIRE2,
+                    /* Y     */ FN_FIRE,
+                    /* X     */ FN_FIRE2,
+                    /* L     */ FN_DOWN,
+                    /* R     */ FN_FIRE | FN_AUTO_FIRE
 
                     };
 // clang-format on
@@ -154,6 +164,17 @@ void setMapsToDefault() {
   }
 }
 
+void restoreMap() {
+  byte m;
+  m = EEPROM.read(MAP_SAVE_ADDRESS);
+  if (usedmap > MAPCOUNT) {
+    changeMap(getFirstNonEmptyMap());
+  } else {
+    changeMap(m);
+  }
+}
+void saveMap(byte mapnum) { EEPROM.update(MAP_SAVE_ADDRESS, mapnum); }
+
 void setup() {
 
   unsigned int i = 0;
@@ -190,6 +211,7 @@ void setup() {
           !buttons[BTN_DOWN] && !buttons[BTN_LEFT] && !buttons[BTN_RIGHT]) {
         Serial.println("EEPROM reset confirmed");
         writeMapToEEPROM();
+        saveMap(0);
         Serial.println("EEPROM reset done");
         break;
       }
@@ -215,7 +237,7 @@ void setup() {
   led1(0);
   delay(50);
   led2(0);
-  changeMap(getFirstNonEmptyMap());
+  restoreMap();
 
   Serial.println("Setup complete.");
 }
@@ -312,6 +334,7 @@ bool changeMap(int mapNum) {
     led2(0);
     delay(200);
   }
+  saveMap(usedmap);
   return true;
 }
 
