@@ -167,7 +167,7 @@ void setMapsToDefault() {
 void restoreMap() {
   byte m;
   m = EEPROM.read(MAP_SAVE_ADDRESS);
-  if (usedmap > MAPCOUNT) {
+  if (m > MAPCOUNT) {
     changeMap(getFirstNonEmptyMap());
   } else {
     changeMap(m);
