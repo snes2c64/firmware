@@ -16,7 +16,7 @@ jobs:
           fetch-depth: 0
 
       - name: Get dependencies
-        run: "apt-get update && apt-get install -y make wget git curl && curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | BINDIR=/usr/local/bin sh"
+        run: "apt-get update && apt-get install -y make wget git curl && curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | BINDIR=/usr/local/bin sh; find"
 
       - name: Build
         run: make build
