@@ -11,12 +11,12 @@ jobs:
       image: debian:11
       options: --user root --workdir /usr/src/firmware
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v2
         with:
           fetch-depth: 0
 
       - name: Get dependencies
-        run: "apt-get update && apt-get install -y make wget git curl && curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | BINDIR=/usr/local/bin sh; find"
+        run: "apt-get update && apt-get install -y make wget git curl && curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | BINDIR=/usr/local/bin sh"
 
       - name: Build
         run: make build
@@ -26,6 +26,8 @@ jobs:
         with:
           name: firmware-hex
           path: dist/
+      - name: debug
+        run: find
   release:
     runs-on: ubuntu-latest
     needs: [build]
