@@ -1,6 +1,16 @@
 #!/usr/bin/env bash
 name="$(./versioner)"
-git tag --points-at HEAD | grep -q . || {
-	name="$(./versioner -a "-$(git rev-parse --abbrev-ref HEAD)-$(git rev-parse --short HEAD)")"
-}
+
+if [ -d .git ]; then
+	git tag --points-at HEAD | grep -q . || {
+		name="$(./versioner -a "-$(git rev-parse --abbrev-ref HEAD)-$(git rev-parse --short HEAD)")"
+	}
+
+else
+
+	if [[ "$GITHUB_REF_TYPE" == "branch" ]]; then
+		name="$(./versioner -a "-$GITHUB_REF_NAME-${GITHUB_SHA:0:7}")"
+	fi
+fi
+
 echo "$name"
